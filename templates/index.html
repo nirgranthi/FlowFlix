@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowFlix — Unlimited Local Streaming</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Netflix style icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-netflix text-white">
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="navbar fixed-top" id="mainNavbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <a href="#" class="brand-logo" onclick="app.filterCategory('all'); return false;">
+                    <span class="logo-red">FLOW</span>FLIX
+                </a>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="#" class="nav-link active" data-cat="all" onclick="app.filterCategory('all'); return false;">Home</a></li>
+                    <li><a href="#" class="nav-link" data-cat="movie" onclick="app.filterCategory('movie'); return false;">Movies</a></li>
+                    <li><a href="#" class="nav-link" data-cat="tv" onclick="app.filterCategory('tv'); return false;">TV Shows</a></li>
+                    <li><a href="#" class="nav-link" data-cat="folders" onclick="app.filterCategory('folders'); return false;">Folders</a></li>
+                </ul>
+            </div>
+            
+            <div class="nav-right">
+                <!-- Search Box -->
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Titles, folders, tags..." oninput="app.handleSearch()">
+                    <button id="clearSearchBtn" class="clear-search hidden" onclick="app.clearSearch()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Actions -->
+                <button class="btn btn-icon-text btn-outline" onclick="app.rescanLibrary()" title="Rescan E:\Movies">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="btn-text">Rescan</span>
+                </button>
+                
+                <button class="btn btn-icon-text btn-primary" onclick="app.openUploadModal()" title="Upload new video">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span class="btn-text">Upload</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO FEATURED SECTION -->
+    <header class="hero-section" id="heroSection">
+        <div class="hero-backdrop" id="heroBackdrop"></div>
+        <div class="hero-gradient"></div>
+        <div class="hero-content" id="heroContent">
+            <div class="hero-badge" id="heroBadge"><i class="fa-solid fa-fire"></i> FEATURED MOVIE</div>
+            <h1 class="hero-title" id="heroTitle">Loading FlowFlix...</h1>
+            <div class="hero-meta" id="heroMeta">
+                <span class="badge badge-match" id="heroMatch">98% Match</span>
+                <span class="badge badge-outline" id="heroYear">2026</span>
+                <span class="badge badge-quality" id="heroQuality">1080p</span>
+                <span class="badge badge-audio" id="heroAudio">Dual Audio</span>
+                <span class="hero-size" id="heroSize">2.4 GB</span>
+            </div>
+            <p class="hero-description" id="heroDescription">
+                Stream your favorite movies and series directly from E:\Movies with instant playback and direct high-speed local downloads.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-hero btn-hero-play" id="heroPlayBtn">
+                    <i class="fa-solid fa-play"></i> Play Now
+                </button>
+                <button class="btn btn-hero btn-hero-download" id="heroDownloadBtn">
+                    <i class="fa-solid fa-download"></i> Download
+                </button>
+                <button class="btn btn-hero btn-hero-info" id="heroInfoBtn">
+                    <i class="fa-solid fa-circle-info"></i> More Info
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-container">
+
+        <!-- FOLDER FILTER PILLS -->
+        <section class="folder-bar-container" id="folderBarSection">
+            <div class="section-header-sm">
+                <span><i class="fa-solid fa-folder-tree"></i> Folders in E:\Movies</span>
+            </div>
+            <div class="folder-pills" id="folderPillsList">
+                <!-- Dynamic folder pills -->
+            </div>
+        </section>
+
+        <!-- SEARCH RESULTS CONTAINER (hidden by default) -->
+        <section class="content-row search-results-section hidden" id="searchResultsSection">
+            <h2 class="row-title"><i class="fa-solid fa-magnifying-glass"></i> Search Results (<span id="searchCount">0</span>)</h2>
+            <div class="cards-grid" id="searchResultsGrid"></div>
+        </section>
+
+        <!-- MAIN CAROUSELS CONTAINER -->
+        <div id="carouselsContainer">
+            <!-- Dynamic rows will be rendered here: Recently Added, TV Shows, Movies, Folders -->
+        </div>
+
+    </main>
+
+    <!-- METADATA & DETAILS MODAL -->
+    <div class="modal-backdrop hidden" id="detailsModal" onclick="app.closeModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <button class="modal-close-btn" onclick="app.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-hero">
+                <div class="modal-backdrop-img" id="modalBackdrop"></div>
+                <div class="modal-hero-gradient"></div>
+                <div class="modal-hero-content">
+                    <h2 class="modal-title" id="modalTitle">Movie Title</h2>
+                    <div class="modal-quick-actions">
+                        <button class="btn btn-hero btn-hero-play" id="modalPlayBtn">
+                            <i class="fa-solid fa-play"></i> Play
+                        </button>
+                        <button class="btn btn-hero btn-hero-download" id="modalDownloadBtn">
+                            <i class="fa-solid fa-download"></i> Download File
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <div class="modal-left">
+                        <div class="modal-meta-row">
+                            <span class="badge badge-match">99% Match</span>
+                            <span class="badge badge-outline" id="modalYear">2026</span>
+                            <span class="badge badge-quality" id="modalQuality">1080p</span>
+                            <span class="badge badge-audio" id="modalAudio">Hindi + English</span>
+                            <span class="badge badge-tech" id="modalCodec">HEVC</span>
+                        </div>
+                        <p class="modal-description" id="modalDescription">No description available.</p>
+                        
+                        <!-- Subtitles Selector if available -->
+                        <div class="modal-subtitles-box hidden" id="modalSubtitlesBox">
+                            <label><i class="fa-solid fa-closed-captioning"></i> Subtitles Detected:</label>
+                            <select id="modalSubtitleSelect" class="custom-select">
+                                <option value="">None / Off</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-right">
+                        <div class="meta-item">
+                            <span class="meta-label">Folder / Location:</span>
+                            <span class="meta-val" id="modalFolder">E:\Movies</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">File Name:</span>
+                            <span class="meta-val code-val" id="modalFilename">file.mkv</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">File Size:</span>
+                            <span class="meta-val" id="modalSize">1.5 GB</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Last Modified:</span>
+                            <span class="meta-val" id="modalDate">2026-10-06</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD MODAL -->
+    <div class="modal-backdrop hidden" id="uploadModal" onclick="app.closeUploadModal(event)">
+        <div class="modal-card modal-sm" onclick="event.stopPropagation()">
+            <button class="modal-close-btn" onclick="app.closeUploadModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="upload-header">
+                <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload to FlowFlix</h3>
+                <p>Add new movies or videos directly into FlowFlix uploads.</p>
+            </div>
+            <form id="uploadForm" onsubmit="app.submitUpload(event)">
+                <div class="form-group">
+                    <label>Select Video File</label>
+                    <input type="file" id="uploadFileInput" accept="video/*,.mkv,.mp4,.avi,.webm,.mov" required>
+                </div>
+                <div class="form-group">
+                    <label>Title (Optional)</label>
+                    <input type="text" id="uploadTitleInput" placeholder="Auto-detected from file name if blank">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea id="uploadDescInput" rows="3" placeholder="Brief summary..."></textarea>
+                </div>
+                
+                <div class="progress-bar-container hidden" id="uploadProgressContainer">
+                    <div class="progress-bar-fill" id="uploadProgressBar"></div>
+                    <span class="progress-text" id="uploadProgressText">0%</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="app.closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">Upload Video</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NETFLIX CUSTOM VIDEO PLAYER OVERLAY -->
+    <div class="video-player-overlay hidden" id="playerOverlay">
+        <video id="mainVideoPlayer" preload="metadata" crossorigin="anonymous">
+            Your browser does not support HTML5 video streaming.
+        </video>
+        <div class="subtitle-display" id="subtitleDisplay"></div>
+
+        <!-- PLAYER TOP BAR -->
+        <div class="player-top-bar">
+            <button class="player-back-btn" onclick="player.close()" title="Back to Browsing">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="player-title-info">
+                <span class="player-video-title" id="playerTitle">Movie Title</span>
+                <span class="player-video-sub" id="playerSub">E:\Movies</span>
+            </div>
+            <div class="player-top-actions">
+                <a id="playerDownloadLink" class="btn btn-sm btn-outline" href="#" download title="Download Movie File">
+                    <i class="fa-solid fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+
+        <!-- PLAYER CONTROLS OVERLAY -->
+        <div class="player-controls-container" id="playerControls">
+            <!-- Timeline / Scrub bar -->
+            <div class="timeline-container" id="timelineContainer">
+                <div class="timeline-buffer" id="timelineBuffer"></div>
+                <div class="timeline-progress" id="timelineProgress"></div>
+                <div class="timeline-handle" id="timelineHandle"></div>
+                <div class="timeline-hover-time" id="timelineHoverTime">00:00</div>
+            </div>
+
+            <!-- Bottom Controls Bar -->
+            <div class="player-bottom-bar">
+                <div class="player-left-controls">
+                    <button class="player-btn" id="playPauseBtn" onclick="player.togglePlay()" title="Play/Pause (Space)">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button class="player-btn" onclick="player.skip(-10)" title="Rewind 10s (Left Arrow)">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button class="player-btn" onclick="player.skip(10)" title="Forward 10s (Right Arrow)">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+
+                    <!-- Volume Control -->
+                    <div class="volume-container">
+                        <button class="player-btn" id="muteBtn" onclick="player.toggleMute()" title="Mute/Unmute">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="player.setVolume(this.value)">
+                    </div>
+
+                    <!-- Time Display -->
+                    <div class="time-display">
+                        <span id="currentTimeDisplay">00:00</span> / <span id="durationDisplay">00:00</span>
+                    </div>
+                </div>
+
+                <div class="player-right-controls">
+                    <!-- Multi-Audio Track Selector -->
+                    <div class="player-dropdown">
+                        <button class="player-btn text-btn" id="audioBtn" onclick="player.toggleDropdown('audioTrackMenu')" title="Audio Track">
+                            <i class="fa-solid fa-language"></i> <span id="audioTrackLabel">Audio</span>
+                        </button>
+                        <div class="dropdown-menu hidden" id="audioTrackMenu">
+                            <!-- Audio tracks dynamically populated -->
+                        </div>
+                    </div>
+
+                    <!-- Speed Selector -->
+                    <div class="player-dropdown">
+                        <button class="player-btn text-btn" id="speedBtn" onclick="player.toggleDropdown('speedMenu')" title="Playback Speed">
+                            1x
+                        </button>
+                        <div class="dropdown-menu hidden" id="speedMenu">
+                            <div class="dropdown-item" onclick="player.setSpeed(0.5, '0.5x')">0.5x</div>
+                            <div class="dropdown-item active" onclick="player.setSpeed(1.0, '1x')">1.0x (Normal)</div>
+                            <div class="dropdown-item" onclick="player.setSpeed(1.25, '1.25x')">1.25x</div>
+                            <div class="dropdown-item" onclick="player.setSpeed(1.5, '1.5x')">1.5x</div>
+                            <div class="dropdown-item" onclick="player.setSpeed(2.0, '2.0x')">2.0x</div>
+                        </div>
+                    </div>
+
+                    <!-- Subtitle Selector -->
+                    <div class="player-dropdown">
+                        <button class="player-btn" id="subBtn" onclick="player.toggleDropdown('subMenu')" title="Subtitles">
+                            <i class="fa-solid fa-closed-captioning"></i>
+                        </button>
+                        <div class="dropdown-menu hidden" id="subMenu">
+                            <div class="dropdown-item active" onclick="player.setSubtitle('')">Off</div>
+                        </div>
+                    </div>
+
+                    <!-- Screen Rotation Button -->
+                    <button class="player-btn" id="rotateBtn" onclick="player.toggleRotation()" title="Rotate Screen Orientation">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </button>
+
+                    <!-- Fullscreen -->
+                    <button class="player-btn" onclick="player.toggleFullscreen()" title="Full Screen (F)">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast hidden" id="toast">
+        <i class="fa-solid fa-circle-info" id="toastIcon"></i>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/player.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
