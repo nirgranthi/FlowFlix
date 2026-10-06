@@ -20,6 +20,7 @@ import json
 import hashlib
 import socket
 import subprocess
+import shutil
 import threading
 from datetime import datetime, timezone
 from urllib.parse import unquote, quote
@@ -46,14 +47,8 @@ ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mkv", ".webm", ".avi", ".mov", ".m4v", ".m
 ALLOWED_SUB_EXTENSIONS = {".srt", ".vtt"}
 
 # Locate FFmpeg & FFprobe binaries
-FFMPEG_BIN = r"C:\Program Files\Krita (x64)\bin\ffmpeg.exe"
-FFPROBE_BIN = r"C:\Program Files\Krita (x64)\bin\ffprobe.exe"
-
-# Fallbacks if not in Krita directory
-if not os.path.exists(FFMPEG_BIN):
-    FFMPEG_BIN = "ffmpeg"
-if not os.path.exists(FFPROBE_BIN):
-    FFPROBE_BIN = "ffprobe"
+FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
+FFPROBE_BIN = shutil.which("ffprobe") or "ffprobe"
 
 TMDB_API_KEY = "15d2fb603077b72163e2776c5b058c97"
 
