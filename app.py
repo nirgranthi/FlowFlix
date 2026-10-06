@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 from urllib.parse import unquote, quote
 import urllib.request
 import urllib.parse
+import qrcode
 
 from flask import Flask, abort, render_template, request, send_file, Response, jsonify
 
@@ -725,6 +726,10 @@ if __name__ == "__main__":
     print(f"      - Local PC:   http://localhost:{PORT}")
     for ip in get_local_ips():
         print(f"      - Mobile/WiFi: http://{ip}:{PORT}")
+        qr = qrcode.QRCode(version=1, box_size=1, border=1)
+        qr.add_data(f'http://{ip}:5000')
+        qr.make(fit=True)
+        qr.print_ascii()
     
     print("\n" + "=" * 65 + "\n")
 
