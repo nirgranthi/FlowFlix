@@ -45,7 +45,7 @@ const app = {
     },
 
     async rescanLibrary() {
-        this.showToast('Scanning E:\\Movies for new files...', 'info');
+        this.showToast('Scanning media library for new files...', 'info');
         try {
             const res = await fetch('/api/scan', { method: 'POST' });
             if (res.ok) {
@@ -63,8 +63,8 @@ const app = {
 
     renderHero() {
         if (!this.allVideos.length) {
-            document.getElementById('heroTitle').textContent = 'No Movies Found in E:\\Movies';
-            document.getElementById('heroDescription').textContent = 'Please put your video files into E:\\Movies or click Upload above.';
+            document.getElementById('heroTitle').textContent = 'No Movies Found in Media Library';
+            document.getElementById('heroDescription').textContent = 'Please put your video files into the media folder or click Upload above.';
             return;
         }
 
@@ -78,7 +78,7 @@ const app = {
         document.getElementById('heroQuality').textContent = v.quality || '1080p';
         document.getElementById('heroAudio').textContent = v.audio || 'HD Audio';
         document.getElementById('heroSize').textContent = v.size_formatted || '';
-        document.getElementById('heroDescription').textContent = v.description || `High quality media file located in ${v.folder || 'E:\\Movies'}. Stream instantly or download to device.`;
+        document.getElementById('heroDescription').textContent = v.description || `High quality media file located in ${v.folder || 'Media Library'}. Stream instantly or download to device.`;
 
         // Action Buttons
         document.getElementById('heroPlayBtn').onclick = () => player.open(v.id, v.title, v.folder, v.subtitle_url, v.filename);
@@ -216,7 +216,7 @@ const app = {
         const isTv = v.season_episode ? `<span class="badge badge-match">${v.season_episode}</span>` : '';
 
         const escapedTitle = this.escapeHtml(v.title);
-        const escapedFolder = this.escapeHtml(v.folder || 'E:\\Movies');
+        const escapedFolder = this.escapeHtml(v.folder || 'Media Library');
         const escapedFilename = this.escapeHtml(v.filename);
         const posterUrl = `/poster/${encodeURIComponent(v.id)}`;
 
@@ -323,9 +323,9 @@ const app = {
         document.getElementById('modalQuality').textContent = v.quality || '1080p';
         document.getElementById('modalAudio').textContent = v.audio || 'Original Audio';
         document.getElementById('modalCodec').textContent = v.codec || 'H.264/HEVC';
-        document.getElementById('modalDescription').textContent = v.description || `Video stream auto-indexed from E:\\Movies. Direct range streaming support enabled.`;
+        document.getElementById('modalDescription').textContent = v.description || `Video stream auto-indexed from media library. Direct range streaming support enabled.`;
         
-        document.getElementById('modalFolder').textContent = v.folder || 'E:\\Movies';
+        document.getElementById('modalFolder').textContent = v.folder || 'Media Library';
         document.getElementById('modalFilename').textContent = v.filename;
         document.getElementById('modalSize').textContent = v.size_formatted;
         document.getElementById('modalDate').textContent = v.added;

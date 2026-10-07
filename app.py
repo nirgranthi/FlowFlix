@@ -1,8 +1,8 @@
 r"""
-FlowFlix — Netflix-style Streaming Server for E:\Movies
+FlowFlix — Netflix-style Streaming Server for Media Directory
 
 Features:
-  - Recursive auto-indexing of E:\Movies and all subfolders
+  - Recursive auto-indexing of media directory and all subfolders
   - Advanced filename metadata parser (Title, Year, Quality, Audio, Codec, Season/Episode)
   - TMDB Poster Fetch & Local Disk Caching + FFmpeg 10-min mark Fallback Thumbnail Generator
   - Multi-Audio Track Detection & Dynamic FFmpeg Audio Track Remuxing
@@ -31,14 +31,34 @@ import qrcode
 from flask import Flask, abort, render_template, request, send_file, Response, jsonify
 
 # ---------------------------------------------------------------------------
-# Configuration & Paths
+# Configuration & Paths (Loaded from .env)
 # ---------------------------------------------------------------------------
 
-HOST = "0.0.0.0"
-PORT = 5000
-
-MOVIES_ROOT = os.path.abspath(r"E:\Movies")
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Load environment variables from .env
+try:
+    from dotenv import load_dotenv
+    _env_path = os.path.join(APP_DIR, ".env")
+    if not os.path.exists(_env_path):
+        _env_path = os.path.join(os.path.dirname(APP_DIR), ".env")
+    load_dotenv(_env_path)
+except ImportError:
+    _env_path = os.path.join(APP_DIR, ".env")
+    if not os.path.exists(_env_path):
+        _env_path = os.path.join(os.path.dirname(APP_DIR), ".env")
+    if os.path.exists(_env_path):
+        with open(_env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", 5000))
+
+MOVIES_ROOT = os.path.abspath(os.getenv("MOVIES_DIR", r"E:\Movies"))
 UPLOAD_FOLDER = os.path.join(APP_DIR, "uploads")
 METADATA_FILE = os.path.join(UPLOAD_FOLDER, "metadata.json")
 POSTER_CACHE_DIR = os.path.join(UPLOAD_FOLDER, "cache", "posters")
@@ -50,10 +70,12 @@ ALLOWED_SUB_EXTENSIONS = {".srt", ".vtt"}
 FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
 FFPROBE_BIN = shutil.which("ffprobe") or "ffprobe"
 
-TMDB_API_KEY = "15d2fb603077b72163e2776c5b058c97"
+TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024 * 1024  # 10 GB limit
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24).hex())
+
 
 _library = []
 _folders = []

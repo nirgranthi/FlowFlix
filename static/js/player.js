@@ -79,7 +79,7 @@ const player = {
     open(videoId, title, folderPath, subtitleUrl, filename) {
         this.currentVideoId = videoId;
         this.currentVideoTitle = title || videoId;
-        this.currentVideoFolder = folderPath || 'E:\\Movies';
+        this.currentVideoFolder = folderPath || 'Media Library';
         this.currentVideoFilename = filename || title || videoId;
 
         this.totalDuration = 0;
