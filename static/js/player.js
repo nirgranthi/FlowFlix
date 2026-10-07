@@ -38,6 +38,9 @@ const player = {
         
         // Hide controls after inactivity
         this.setupInactivityTimer();
+
+        // Setup Popstate Listener for Browser/Mobile Back Gesture
+        this.setupPopstateHandler();
     },
 
     getDuration() {
@@ -76,7 +79,11 @@ const player = {
         }
     },
 
-    open(videoId, title, folderPath, subtitleUrl, filename) {
+    open(videoId, title, folderPath, subtitleUrl, filename, isFromPopState = false) {
+        if (!isFromPopState && (!history.state || history.state.view !== 'player' || history.state.videoId !== videoId)) {
+            history.pushState({ view: 'player', videoId: videoId }, '');
+        }
+
         this.currentVideoId = videoId;
         this.currentVideoTitle = title || videoId;
         this.currentVideoFolder = folderPath || 'Media Library';
@@ -119,7 +126,9 @@ const player = {
         });
     },
 
-    close() {
+    close(isFromPopState = false) {
+        if (!this.overlay || this.overlay.classList.contains('hidden')) return;
+
         if (this.video) {
             this.video.pause();
             this.video.removeAttribute('src');
@@ -137,6 +146,10 @@ const player = {
         
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(()=>{});
+        }
+
+        if (!isFromPopState && history.state && history.state.view === 'player') {
+            history.back();
         }
     },
 
@@ -509,6 +522,46 @@ const player = {
         } else if (e.code === 'Escape') {
             this.close();
         }
+    },
+
+    setupPopstateHandler() {
+        window.addEventListener('popstate', (e) => {
+            // 1. If Video Player is active, close it without triggering history.back()
+            if (this.overlay && !this.overlay.classList.contains('hidden')) {
+                this.close(true);
+                // If popped state is details modal, reopen it
+                if (e.state && e.state.view === 'modal' && e.state.videoId) {
+                    if (window.app) window.app.openModalById(e.state.videoId, true);
+                }
+                return;
+            }
+
+            // 2. If Details Modal is active, close it
+            const detailsModal = document.getElementById('detailsModal');
+            if (detailsModal && !detailsModal.classList.contains('hidden')) {
+                if (window.app) window.app.closeModal(null, true);
+                return;
+            }
+
+            // 3. If Upload Modal is active, close it
+            const uploadModal = document.getElementById('uploadModal');
+            if (uploadModal && !uploadModal.classList.contains('hidden')) {
+                if (window.app) window.app.closeUploadModal(null, true);
+                return;
+            }
+
+            // 4. Handle history forward/back when no modal is open
+            if (e.state && e.state.view === 'modal' && e.state.videoId) {
+                if (window.app) window.app.openModalById(e.state.videoId, true);
+            } else if (e.state && e.state.view === 'player' && e.state.videoId) {
+                if (window.app) {
+                    const video = window.app.allVideos.find(v => v.id === e.state.videoId);
+                    if (video) {
+                        this.open(video.id, video.title, video.folder, video.subtitle_url, video.filename, true);
+                    }
+                }
+            }
+        });
     }
 };
 

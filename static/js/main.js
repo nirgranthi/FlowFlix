@@ -309,15 +309,19 @@ const app = {
     },
 
     // DETAILS MODAL
-    openModalById(id) {
+    openModalById(id, isFromPopState = false) {
         const video = this.allVideos.find(v => v.id === id);
-        if (video) this.openModal(video);
+        if (video) this.openModal(video, isFromPopState);
     },
 
-    openModal(v) {
+    openModal(v, isFromPopState = false) {
         this.selectedVideo = v;
         const modal = document.getElementById('detailsModal');
         
+        if (!isFromPopState && (!history.state || history.state.view !== 'modal' || history.state.videoId !== v.id)) {
+            history.pushState({ view: 'modal', videoId: v.id }, '');
+        }
+
         document.getElementById('modalTitle').textContent = v.title;
         document.getElementById('modalYear').textContent = v.year || '2026';
         document.getElementById('modalQuality').textContent = v.quality || '1080p';
@@ -344,7 +348,7 @@ const app = {
         // Action Buttons
         document.getElementById('modalPlayBtn').onclick = () => {
             const selectedSub = subSelect.value;
-            this.closeModal();
+            this.closeModal(null, true);
             player.open(v.id, v.title, v.folder, selectedSub, v.filename);
         };
 
@@ -364,25 +368,40 @@ const app = {
         document.body.style.overflow = 'hidden';
     },
 
-    closeModal(e) {
+    closeModal(e, isFromPopState = false) {
+        const modal = document.getElementById('detailsModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
         if (!e || e.target.classList.contains('modal-backdrop') || e.target.closest('.modal-close-btn')) {
-            document.getElementById('detailsModal').classList.add('hidden');
+            modal.classList.add('hidden');
             if (document.getElementById('playerOverlay').classList.contains('hidden')) {
                 document.body.style.overflow = '';
+            }
+            if (!isFromPopState && history.state && history.state.view === 'modal') {
+                history.back();
             }
         }
     },
 
     // UPLOAD MODAL
-    openUploadModal() {
+    openUploadModal(isFromPopState = false) {
+        if (!isFromPopState && (!history.state || history.state.view !== 'upload')) {
+            history.pushState({ view: 'upload' }, '');
+        }
         document.getElementById('uploadModal').classList.remove('hidden');
     },
 
-    closeUploadModal(e) {
+    closeUploadModal(e, isFromPopState = false) {
+        const modal = document.getElementById('uploadModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
         if (!e || e.target.classList.contains('modal-backdrop') || e.target.closest('.modal-close-btn') || e.target.closest('.btn-outline')) {
-            document.getElementById('uploadModal').classList.add('hidden');
+            modal.classList.add('hidden');
             document.getElementById('uploadForm').reset();
             document.getElementById('uploadProgressContainer').classList.add('hidden');
+            if (!isFromPopState && history.state && history.state.view === 'upload') {
+                history.back();
+            }
         }
     },
 
